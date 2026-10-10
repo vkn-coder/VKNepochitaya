@@ -394,6 +394,12 @@
     <div class="header">
         <h1>📓 Классный журнал</h1>
         <div class="current-date" id="dateDisplay"></div>
+        <div id="teacherPanel" hidden style="display: none; gap: 12px; align-items: center; flex-wrap: wrap;">
+            <strong>👩‍🏫 Режим учителя</strong>
+            <button type="button" id="copyTeacherLink">Скопировать ссылку учителя</button>
+            <a href="#">Режим ученика</a>
+            <span>После изменения баллов нажмите «Отправить в Google Таблицу».</span>
+        </div>
     </div>
 
     <!-- Три счётчика -->
@@ -481,6 +487,9 @@
     ];
 
     // ======================== СОСТОЯНИЕ ========================
+    let scoresLoading = true;
+    let savingScores = false;
+    let loadedScores = {};
     let weekScores = JSON.parse(localStorage.getItem('classJournal_week')) || {};
     let allTimeScores = JSON.parse(localStorage.getItem('classJournal_allTime')) || {};
     let isTeacherMode = window.location.hash === '#teacher';
@@ -600,10 +609,10 @@
                 <div class="student-name">${name}</div>
                 <div class="score" id="score-${CSS.escape(name)}">${weekScore}</div>
                 <div class="card-buttons">
-                    <button class="plus1" data-name="${name}" data-delta="1">+1</button>
-                    <button class="plus2" data-name="${name}" data-delta="2">+2</button>
-                    <button class="plus3" data-name="${name}" data-delta="3">+3</button>
-                    <button class="minus" data-name="${name}" data-delta="-1">−1</button>
+                    <button class="plus1" data-name="${name}" data-delta="1" ${scoresLoading || savingScores ? 'disabled' : ''}>+1</button>
+                    <button class="plus2" data-name="${name}" data-delta="2" ${scoresLoading || savingScores ? 'disabled' : ''}>+2</button>
+                    <button class="plus3" data-name="${name}" data-delta="3" ${scoresLoading || savingScores ? 'disabled' : ''}>+3</button>
+                    <button class="minus" data-name="${name}" data-delta="-1" ${scoresLoading || savingScores ? 'disabled' : ''}>−1</button>
                 </div>
             `;
             studentsGrid.appendChild(card);
@@ -630,7 +639,7 @@
     }
 
     function addPoints(name, delta) {
-        if (!isTeacherMode) return; // защита
+        if (!isTeacherMode || scoresLoading || savingScores || !STUDENTS.includes(name) || !Number.isFinite(delta)) return;
 
         // Обновляем недельные и все времена
         weekScores[name] = (weekScores[name] || 0) + delta;
@@ -709,7 +718,7 @@
 
     // Сбросить неделю (только для учителя)
     resetWeekBtn.addEventListener('click', () => {
-        if (!isTeacherMode) return;
+        if (!isTeacherMode || scoresLoading || savingScores) return;
         if (confirm('Сбросить баллы за неделю? Все недельные баллы обнулятся.')) {
             STUDENTS.forEach(name => {
                 weekScores[name] = 0;
@@ -719,37 +728,52 @@
         }
     });
 
-    // Отправить в Google Таблицу
-    sendGoogleBtn.addEventListener('click', () => {
-        if (!isTeacherMode) return;
-
-        // Формируем данные: имя, баллы за неделю, баллы за всё время
-        const payload = STUDENTS.map(name => ({
-            name: name,
-            week: weekScores[name] || 0,
-            total: allTimeScores[name] || 0
-        }));
-
-        // Отправляем через fetch (без ожидания ответа, т.к. может быть CORS)
-        fetch(API_URL, {
-            method: 'POST',
-            mode: 'no-cors', // чтобы избежать ошибок CORS в локальном файле
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload)
-        })
-        .then(() => {
-            alert('✅ Данные отправлены в Google Таблицу (возможно, потребуется проверить таблицу).');
-        })
-        .catch(error => {
-            console.error('Ошибка отправки:', error);
-            alert('⚠️ Не удалось отправить данные. Проверьте подключение или URL.');
-        });
+    sendGoogleBtn.addEventListener('click', async () => {
+        if (!isTeacherMode || scoresLoading || savingScores) return;
+        const students = STUDENTS.filter(name => Object.hasOwn(loadedScores, name) && weekScores[name] !== loadedScores[name])
+            .map(name => ({name, points: weekScores[name], expectedPoints: loadedScores[name]}));
+        if (!students.length) { alert('Нет изменений для отправки.'); return; }
+        savingScores = true;
+        sendGoogleBtn.disabled = true;
+        resetWeekBtn.disabled = true;
+        renderStudents();
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'text/plain;charset=utf-8'},
+                body: JSON.stringify({students})
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const result = await response.json();
+            if (result.success !== true) throw new Error(result.error || result.message || 'Запись отклонена');
+            students.forEach(student => { loadedScores[student.name] = student.points; });
+            alert('Баллы сохранены в Google Таблице.');
+        } catch (error) {
+            console.error('Ошибка записи:', error);
+            alert('Не удалось подтвердить запись: ' + error.message + '. Проверьте таблицу перед повторной отправкой.');
+        } finally {
+            savingScores = false;
+            sendGoogleBtn.disabled = false;
+            resetWeekBtn.disabled = false;
+            renderStudents();
+        }
     });
 
-    // ======================== РЕЖИМ УЧИТЕЛЯ / УЧЕНИКА ========================
+    document.getElementById('copyTeacherLink').addEventListener('click', async () => {
+        const url = new URL(window.location.href);
+        url.hash = 'teacher';
+        try {
+            await navigator.clipboard.writeText(url.href);
+            document.getElementById('copyTeacherLink').textContent = 'Ссылка скопирована';
+        } catch {
+            window.prompt('Ссылка учителя:', url.href);
+        }
+    });
+
     function applyMode() {
+        const panel = document.getElementById('teacherPanel');
+        panel.hidden = !isTeacherMode;
+        panel.style.display = isTeacherMode ? 'flex' : 'none';
         if (isTeacherMode) {
             appDiv.classList.remove('student-view');
             document.querySelectorAll('.card-buttons').forEach(el => el.style.display = 'flex');
@@ -802,7 +826,7 @@
             }
             const matched = STUDENTS.filter(name => scores.has(normalizeName(name)));
             if (!matched.length) throw new Error('В ответе не найдены баллы учеников');
-            matched.forEach(name => { weekScores[name] = scores.get(normalizeName(name)); });
+            matched.forEach(name => { weekScores[name] = scores.get(normalizeName(name)); loadedScores[name] = weekScores[name]; });
             renderAll();
             status.textContent = matched.length === STUDENTS.length
                 ? 'Баллы загружены из таблицы.'
@@ -810,6 +834,9 @@
         } catch (error) {
             console.error('Ошибка загрузки баллов:', error);
             status.textContent = 'Не удалось загрузить баллы из таблицы. Показаны локальные данные браузера.';
+        } finally {
+            scoresLoading = false;
+            renderStudents();
         }
     }
 
