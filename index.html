@@ -776,6 +776,43 @@
         renderAll();
     });
 
+    // Загрузка недельных баллов из Google Таблицы.
+    async function loadScores() {
+        const status = document.createElement('p');
+        status.setAttribute('role', 'status');
+        status.textContent = 'Загрузка баллов из таблицы…';
+        studentsGrid.before(status);
+        try {
+            const response = await fetch(API_URL, { cache: 'no-store' });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const json = await response.json();
+            if (json.success !== true || !Array.isArray(json.data)) {
+                throw new Error('Некорректный формат ответа');
+            }
+            const normalizeName = value => String(value ?? '').trim().replace(/\s+/g, ' ');
+            const scores = new Map();
+            for (const sourceRow of json.data) {
+                const row = Object.fromEntries(Object.entries(sourceRow).map(([key, value]) => [key.trim(), value]));
+                const name = normalizeName(row['Имя']);
+                const rawScore = row['Баллы'];
+                const score = Number(rawScore);
+                if (name && rawScore !== null && rawScore !== undefined && String(rawScore).trim() !== '' && Number.isFinite(score)) {
+                    scores.set(name, score);
+                }
+            }
+            const matched = STUDENTS.filter(name => scores.has(normalizeName(name)));
+            if (!matched.length) throw new Error('В ответе не найдены баллы учеников');
+            matched.forEach(name => { weekScores[name] = scores.get(normalizeName(name)); });
+            renderAll();
+            status.textContent = matched.length === STUDENTS.length
+                ? 'Баллы загружены из таблицы.'
+                : `Баллы загружены для ${matched.length} из ${STUDENTS.length} учеников. Для остальных показаны локальные данные.`;
+        } catch (error) {
+            console.error('Ошибка загрузки баллов:', error);
+            status.textContent = 'Не удалось загрузить баллы из таблицы. Показаны локальные данные браузера.';
+        }
+    }
+
     // ======================== ИНИЦИАЛИЗАЦИЯ ========================
     function init() {
         // Дата
@@ -796,6 +833,7 @@
     }
 
     init();
+    loadScores();
 </script>
 </body>
 </html>
