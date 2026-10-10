@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Классный журнал — ClassDojo вдохновлённый</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+        }
+        body {
+            background: linear-gradient(145deg, #ffdde1 0%, #ee9ca7 100%);
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .journal {
+            max-width: 1400px;
+            width: 100%;
+        }
+        /* Шапка */
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(12px);
+            padding: 1.2rem 2rem;
+            border-radius: 60px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            font-size: 2.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #2b2b6b, #b62b6b);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -0.5px;
+        }
+        .current-date {
+            font-size: 1.3rem;
+            font-weight: 600;
+            background: #2b2b6b;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            box-shadow: 0 5px 0 #12123a;
+        }
+
+        /* Три счётчика */
+        .stats-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            flex: 1 1 180px;
+            background: white;
+            border-radius: 40px;
+            padding: 1.5rem 1.8rem;
+            box-shadow: 0 12px 0 rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+        }
+        .stat-label {
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            color: #555;
+        }
+        .stat-value {
+            font-size: 2.8rem;
+            font-weight: 900;
+            line-height: 1.2;
+            color: #1e1e4b;
+        }
+        .stat-value.leader {
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        /* Шкала активностей */
+        .activity-scale {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-bottom: 2rem;
+            background: rgba(255,255,255,0.5);
+            backdrop-filter: blur(10px);
+            padding: 1rem 1.5rem;
+            border-radius: 100px;
+            justify-content: center;
+            align-items: center;
+        }
+        .activity-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: white;
+            padding: 0.5rem 1.3rem;
+            border-radius: 40px;
+            font-weight: 700;
+            box-shadow: 0 4px 0 #ccc;
+            font-size: 1.1rem;
+        }
+        .activity-badge span:first-child {
+            font-size: 1.4rem;
+        }
+
+        /* Панель управления + поиск */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            align-items: center;
+        }
+        .search-box {
+            flex: 2 1 260px;
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 50px;
+            padding: 0.2rem 0.2rem 0.2rem 1.5rem;
+            box-shadow: 0 6px 0 #b0a8b9;
+        }
+        .search-box input {
+            border: none;
+            outline: none;
+            font-size: 1.2rem;
+            padding: 0.9rem 0.5rem;
+            width: 100%;
+            background: transparent;
+            font-weight: 500;
+        }
+        .search-box button {
+            background: #2b2b6b;
+            border: none;
+            color: white;
+            font-size: 1.3rem;
+            padding: 0.8rem 1.6rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .search-box button:hover {
+            background: #3d3d8c;
+        }
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+        }
+        .btn {
+            border: none;
+            padding: 0.9rem 1.8rem;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.1s;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.15);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: white;
+            color: #1e1e4b;
+        }
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.15);
+        }
+        .btn-primary {
+            background: #f8b84a;
+            color: #2b1e0e;
+        }
+        .btn-danger {
+            background: #ff7b7b;
+            color: #4a0b0b;
+        }
+        .btn-google {
+            background: #34a853;
+            color: white;
+        }
+
+        /* Сетка карточек */
+        .students-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.8rem;
+            margin-top: 1rem;
+        }
+        .student-card {
+            background: white;
+            border-radius: 48px;
+            padding: 1.5rem 1rem 1.2rem;
+            box-shadow: 0 12px 0 rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.2s;
+            border: 3px solid transparent;
+            position: relative;
+        }
+        /* Топ-3 подсветка */
+        .student-card.top-1 {
+            border: 6px solid #ffd966;
+            box-shadow: 0 0 0 4px #ffb347, 0 12px 0 rgba(0,0,0,0.1);
+            background: #fff9e6;
+        }
+        .student-card.top-2 {
+            border: 6px solid #c0c0c0;
+            box-shadow: 0 0 0 4px #a0a0a0, 0 12px 0 rgba(0,0,0,0.1);
+            background: #f5f5f5;
+        }
+        .student-card.top-3 {
+            border: 6px solid #cd7f32;
+            box-shadow: 0 0 0 4px #b86b2c, 0 12px 0 rgba(0,0,0,0.1);
+            background: #fef0e0;
+        }
+        .avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.8rem;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.1);
+        }
+        .avatar svg {
+            width: 70px;
+            height: 70px;
+            display: block;
+        }
+        .student-name {
+            font-size: 1.4rem;
+            font-weight: 800;
+            text-align: center;
+            color: #1e1e4b;
+            margin-bottom: 0.4rem;
+            line-height: 1.2;
+        }
+        .score {
+            font-size: 3rem;
+            font-weight: 900;
+            line-height: 1.1;
+            color: #2b2b6b;
+            margin: 0.2rem 0 0.6rem;
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+        .score.bump {
+            animation: bump 0.3s ease-out;
+        }
+        @keyframes bump {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.4); color: #ff8c42; }
+            100% { transform: scale(1); }
+        }
+        .card-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 0.4rem;
+        }
+        .card-buttons button {
+            border: none;
+            background: #f0f0f8;
+            font-size: 1.2rem;
+            font-weight: 800;
+            width: 48px;
+            height: 48px;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #b0b0c0;
+            transition: all 0.05s;
+            color: #1e1e4b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card-buttons button:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #b0b0c0;
+        }
+        .card-buttons button.minus {
+            background: #ffe0e0;
+            box-shadow: 0 5px 0 #d49b9b;
+            color: #a12222;
+        }
+        .card-buttons button.plus1 { background: #d9f0d9; box-shadow: 0 5px 0 #9bbf9b; }
+        .card-buttons button.plus2 { background: #d9e6ff; box-shadow: 0 5px 0 #9bb0d4; }
+        .card-buttons button.plus3 { background: #f3d9ff; box-shadow: 0 5px 0 #b99bd4; }
+
+        /* Скрытие кнопок в режиме ученика */
+        .student-view .card-buttons,
+        .student-view .action-buttons,
+        .student-view .reset-week,
+        .student-view .send-google {
+            display: none !important;
+        }
+
+        /* Модальное окно рейтинга */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(6px);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal.open {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            max-width: 500px;
+            width: 90%;
+            border-radius: 60px;
+            padding: 2rem 2rem 2.5rem;
+            box-shadow: 0 25px 40px rgba(0,0,0,0.3);
+            text-align: center;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-content h2 {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            color: #2b2b6b;
+        }
+        .rating-list {
+            list-style: none;
+            text-align: left;
+            margin: 1.5rem 0;
+        }
+        .rating-list li {
+            font-size: 1.3rem;
+            font-weight: 600;
+            padding: 0.6rem 1rem;
+            border-radius: 30px;
+            margin-bottom: 0.5rem;
+            background: #f4f4ff;
+            display: flex;
+            justify-content: space-between;
+        }
+        .rating-list li.gold { background: #ffd966; }
+        .rating-list li.silver { background: #d0d0d0; }
+        .rating-list li.bronze { background: #e0a87a; }
+
+        .no-students {
+            text-align: center;
+            font-size: 1.5rem;
+            padding: 3rem;
+            background: rgba(255,255,255,0.6);
+            border-radius: 50px;
+            font-weight: 700;
+            color: #444;
+        }
+
+        @media (max-width: 700px) {
+            .header { flex-direction: column; gap: 0.8rem; text-align: center; }
+            .stats-row { gap: 1rem; }
+            .stat-card { padding: 1.2rem; }
+            .stat-value { font-size: 2.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="journal" id="app">
+    <!-- Шапка -->
+    <div class="header">
+        <h1>📓 Классный журнал</h1>
+        <div class="current-date" id="dateDisplay"></div>
+    </div>
+
+    <!-- Три счётчика -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-label">Баллов за неделю</div>
+            <div class="stat-value" id="weekTotal">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Всего за всё время</div>
+            <div class="stat-value" id="allTimeTotal">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Лидер недели</div>
+            <div class="stat-value leader" id="weekLeader">—</div>
+        </div>
+    </div>
+
+    <!-- Шкала активностей -->
+    <div class="activity-scale">
+        <div class="activity-badge"><span>📘</span> +1 работа на уроке</div>
+        <div class="activity-badge"><span>🤝</span> +2 помощь</div>
+        <div class="activity-badge"><span>🏆</span> +3 олимпиада</div>
+        <div class="activity-badge"><span>🚫</span> −1 нарушение</div>
+    </div>
+
+    <!-- Панель управления: поиск + кнопки -->
+    <div class="controls">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 Поиск ученика...">
+            <button id="clearSearchBtn">✕</button>
+        </div>
+        <div class="action-buttons" id="actionButtons">
+            <button class="btn btn-primary" id="weekSummaryBtn">📊 Подвести итоги недели</button>
+            <button class="btn btn-danger reset-week" id="resetWeekBtn">🔄 Сбросить неделю</button>
+            <button class="btn btn-google send-google" id="sendGoogleBtn">📤 Отправить в Google Таблицу</button>
+        </div>
+    </div>
+
+    <!-- Сетка учеников -->
+    <div class="students-grid" id="studentsGrid"></div>
+</div>
+
+<!-- Модальное окно рейтинга -->
+<div class="modal" id="ratingModal">
+    <div class="modal-content">
+        <h2>🏅 Рейтинг недели</h2>
+        <ul class="rating-list" id="ratingList"></ul>
+        <button class="btn btn-primary" id="closeModalBtn" style="margin-top: 1rem;">Закрыть</button>
+    </div>
+</div>
+
+
+<script>
+    // ======================== КОНФИГУРАЦИЯ ========================
+    const API_URL = "https://script.google.com/macros/s/AKfycbyV48vxAO8kyLgpR6AJoKdF7vfuPA70x7x9N3V_5eK1Q20JHNFMaImgAoSV2M65_RyIaA/exec";
+
+    // СПИСОК УЧЕНИКОВ (можно заменить на свои имена)
+    const STUDENTS = [
+'Абдуллин Руслан',
+'Алиев Александр',
+'Вeдищева Алиса',
+'Гольтяева Анна',
+'Гончаров Мирослав',
+'Жученко Михаил',
+'Игнатьев Максим',
+'Кибяков Михаил',
+'Кочетова Варвара',
+'Кривошеева Елизавета',
+'Лапенков Ян',
+'Лян Эвелина',
+'Махмутов Данияр',
+'Мовсисян Роберт',
+'Мовсисян Сафия',
+'Нараева Валерия',
+'Никифоров Всеволод',
+'Николаев Степан',
+'Самойлов Иван',
+'Самойлова Алиса',
+'Терешин Тимофей',
+'Фетисова Юлия',
+'Харитонов Матвей',
+'Черкасова Мирослава',
+'Ястремский Данила'
+    ];
+
+    // ======================== СОСТОЯНИЕ ========================
+    let weekScores = JSON.parse(localStorage.getItem('classJournal_week')) || {};
+    let allTimeScores = JSON.parse(localStorage.getItem('classJournal_allTime')) || {};
+    let isTeacherMode = window.location.hash === '#teacher';
+
+    // Инициализация отсутствующих учеников
+    STUDENTS.forEach(name => {
+        if (weekScores[name] === undefined) weekScores[name] = 0;
+        if (allTimeScores[name] === undefined) allTimeScores[name] = 0;
+    });
+
+    // ======================== DOM ЭЛЕМЕНТЫ ========================
+    const studentsGrid = document.getElementById('studentsGrid');
+    const dateDisplay = document.getElementById('dateDisplay');
+    const weekTotalEl = document.getElementById('weekTotal');
+    const allTimeTotalEl = document.getElementById('allTimeTotal');
+    const weekLeaderEl = document.getElementById('weekLeader');
+    const searchInput = document.getElementById('searchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const weekSummaryBtn = document.getElementById('weekSummaryBtn');
+    const resetWeekBtn = document.getElementById('resetWeekBtn');
+    const sendGoogleBtn = document.getElementById('sendGoogleBtn');
+    const ratingModal = document.getElementById('ratingModal');
+    const ratingList = document.getElementById('ratingList');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const appDiv = document.getElementById('app');
+
+    // ======================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ========================
+    function generateColor(index) {
+        const hues = [0, 30, 60, 120, 180, 210, 250, 280, 320, 350];
+        const hue = hues[index % hues.length];
+        return `hsl(${hue}, 70%, 65%)`;
+    }
+
+    function createAvatarSVG(color, seed) {
+        // Немного варьируем улыбку в зависимости от seed (номера ученика)
+        const smileCurve = seed % 2 === 0 ? 'M 30 45 Q 50 65 70 45' : 'M 30 48 Q 50 70 70 48';
+        return `
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="48" fill="${color}" stroke="#ffffff" stroke-width="4"/>
+                <circle cx="35" cy="40" r="6" fill="#1e1e2f"/>
+                <circle cx="65" cy="40" r="6" fill="#1e1e2f"/>
+                <path d="${smileCurve}" stroke="#1e1e2f" stroke-width="5" fill="none" stroke-linecap="round"/>
+            </svg>
+        `;
+    }
+
+    // Обновление всех счётчиков и карточек
+    function renderAll() {
+        updateStats();
+        renderStudents();
+        saveToLocalStorage();
+    }
+
+    function updateStats() {
+        // Сумма за неделю
+        const weekSum = Object.values(weekScores).reduce((acc, val) => acc + val, 0);
+        weekTotalEl.textContent = weekSum;
+
+        // Сумма за всё время
+        const allTimeSum = Object.values(allTimeScores).reduce((acc, val) => acc + val, 0);
+        allTimeTotalEl.textContent = allTimeSum;
+
+        // Лидер недели
+        let leaderName = '—';
+        let maxScore = -Infinity;
+        for (const [name, score] of Object.entries(weekScores)) {
+            if (score > maxScore) {
+                maxScore = score;
+                leaderName = name;
+            }
+        }
+        if (maxScore === 0 || maxScore === -Infinity) leaderName = '—';
+        weekLeaderEl.textContent = leaderName;
+    }
+
+    function renderStudents() {
+        const query = searchInput.value.trim().toLowerCase();
+        // Сортируем по имени для порядка
+        const sortedNames = [...STUDENTS].sort((a, b) => a.localeCompare(b));
+
+        // Фильтрация по поиску
+        const filtered = sortedNames.filter(name =>
+            name.toLowerCase().includes(query)
+        );
+
+        if (filtered.length === 0) {
+            studentsGrid.innerHTML = '<div class="no-students">😕 Ученики не найдены</div>';
+            return;
+        }
+
+        // Определяем топ-3 по недельным баллам
+        const weekEntries = Object.entries(weekScores);
+        weekEntries.sort((a, b) => b[1] - a[1]);
+        const top3Names = weekEntries.slice(0, 3).map(entry => entry[0]);
+
+        studentsGrid.innerHTML = '';
+
+        filtered.forEach((name, idx) => {
+            const originalIndex = STUDENTS.indexOf(name);
+            const color = generateColor(originalIndex);
+            const weekScore = weekScores[name] || 0;
+            const allScore = allTimeScores[name] || 0;
+
+            // Определяем класс для топ-3
+            let topClass = '';
+            const topIndex = top3Names.indexOf(name);
+            if (topIndex === 0 && weekScore > 0) topClass = 'top-1';
+            else if (topIndex === 1 && weekScore > 0) topClass = 'top-2';
+            else if (topIndex === 2 && weekScore > 0) topClass = 'top-3';
+
+            const card = document.createElement('div');
+            card.className = `student-card ${topClass}`;
+            card.dataset.name = name;
+
+            card.innerHTML = `
+                <div class="avatar">${createAvatarSVG(color, originalIndex)}</div>
+                <div class="student-name">${name}</div>
+                <div class="score" id="score-${CSS.escape(name)}">${weekScore}</div>
+                <div class="card-buttons">
+                    <button class="plus1" data-name="${name}" data-delta="1">+1</button>
+                    <button class="plus2" data-name="${name}" data-delta="2">+2</button>
+                    <button class="plus3" data-name="${name}" data-delta="3">+3</button>
+                    <button class="minus" data-name="${name}" data-delta="-1">−1</button>
+                </div>
+            `;
+            studentsGrid.appendChild(card);
+        });
+
+        // Навешиваем обработчики на кнопки +1, +2, +3, -1 (если режим учителя)
+        if (isTeacherMode) {
+            document.querySelectorAll('.card-buttons button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const name = btn.dataset.name;
+                    const delta = parseInt(btn.dataset.delta, 10);
+                    addPoints(name, delta);
+                });
+            });
+        }
+
+        // Скрываем кнопки в режиме ученика (дополнительно через класс)
+        if (!isTeacherMode) {
+            document.querySelectorAll('.card-buttons').forEach(el => el.style.display = 'none');
+        } else {
+            document.querySelectorAll('.card-buttons').forEach(el => el.style.display = 'flex');
+        }
+    }
+
+    function addPoints(name, delta) {
+        if (!isTeacherMode) return; // защита
+
+        // Обновляем недельные и все времена
+        weekScores[name] = (weekScores[name] || 0) + delta;
+        allTimeScores[name] = (allTimeScores[name] || 0) + delta;
+
+        // Анимация цифры
+        const scoreEl = document.getElementById(`score-${CSS.escape(name)}`);
+        if (scoreEl) {
+            scoreEl.textContent = weekScores[name];
+            scoreEl.classList.add('bump');
+            setTimeout(() => scoreEl.classList.remove('bump'), 300);
+        } else {
+            // Если не нашли (например, при поиске) — просто перерисуем
+            renderStudents();
+        }
+
+        // Обновляем статистику и сохраняем
+        updateStats();
+        saveToLocalStorage();
+
+        // Перерисовываем карточки, чтобы обновить топ-3 подсветку и цифры
+        // Но чтобы не сбить анимацию, сделаем отложенный рендер
+        setTimeout(() => {
+            renderStudents();
+        }, 50);
+    }
+
+    function saveToLocalStorage() {
+        localStorage.setItem('classJournal_week', JSON.stringify(weekScores));
+        localStorage.setItem('classJournal_allTime', JSON.stringify(allTimeScores));
+    }
+
+    // ======================== ОБРАБОТЧИКИ ========================
+    // Поиск
+    searchInput.addEventListener('input', () => {
+        renderStudents();
+    });
+
+    clearSearchBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        renderStudents();
+    });
+
+    // Подвести итоги недели (рейтинг)
+    weekSummaryBtn.addEventListener('click', () => {
+        const entries = Object.entries(weekScores)
+            .filter(([_, score]) => score !== 0) // можно показывать и нулевых, но лучше всех
+            .sort((a, b) => b[1] - a[1]);
+
+        if (entries.length === 0) {
+            ratingList.innerHTML = '<li>Нет данных за неделю</li>';
+        } else {
+            ratingList.innerHTML = entries.map(([name, score], idx) => {
+                let medal = '';
+                if (idx === 0) medal = '🥇 ';
+                else if (idx === 1) medal = '🥈 ';
+                else if (idx === 2) medal = '🥉 ';
+                const liClass = idx === 0 ? 'gold' : idx === 1 ? 'silver' : idx === 2 ? 'bronze' : '';
+                return `<li class="${liClass}"><span>${medal}${name}</span><span>${score} баллов</span></li>`;
+            }).join('');
+        }
+
+        ratingModal.classList.add('open');
+    });
+
+    closeModalBtn.addEventListener('click', () => {
+        ratingModal.classList.remove('open');
+    });
+
+    // Закрытие по клику вне окна
+    ratingModal.addEventListener('click', (e) => {
+        if (e.target === ratingModal) {
+            ratingModal.classList.remove('open');
+        }
+    });
+
+    // Сбросить неделю (только для учителя)
+    resetWeekBtn.addEventListener('click', () => {
+        if (!isTeacherMode) return;
+        if (confirm('Сбросить баллы за неделю? Все недельные баллы обнулятся.')) {
+            STUDENTS.forEach(name => {
+                weekScores[name] = 0;
+            });
+            saveToLocalStorage();
+            renderAll();
+        }
+    });
+
+    // Отправить в Google Таблицу
+    sendGoogleBtn.addEventListener('click', () => {
+        if (!isTeacherMode) return;
+
+        // Формируем данные: имя, баллы за неделю, баллы за всё время
+        const payload = STUDENTS.map(name => ({
+            name: name,
+            week: weekScores[name] || 0,
+            total: allTimeScores[name] || 0
+        }));
+
+        // Отправляем через fetch (без ожидания ответа, т.к. может быть CORS)
+        fetch(API_URL, {
+            method: 'POST',
+            mode: 'no-cors', // чтобы избежать ошибок CORS в локальном файле
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(() => {
+            alert('✅ Данные отправлены в Google Таблицу (возможно, потребуется проверить таблицу).');
+        })
+        .catch(error => {
+            console.error('Ошибка отправки:', error);
+            alert('⚠️ Не удалось отправить данные. Проверьте подключение или URL.');
+        });
+    });
+
+    // ======================== РЕЖИМ УЧИТЕЛЯ / УЧЕНИКА ========================
+    function applyMode() {
+        if (isTeacherMode) {
+            appDiv.classList.remove('student-view');
+            document.querySelectorAll('.card-buttons').forEach(el => el.style.display = 'flex');
+            document.querySelectorAll('.action-buttons .btn').forEach(el => el.style.display = 'inline-flex');
+            // Убедимся, что кнопки сброса и гугла видны
+            resetWeekBtn.style.display = 'inline-flex';
+            sendGoogleBtn.style.display = 'inline-flex';
+        } else {
+            appDiv.classList.add('student-view');
+            document.querySelectorAll('.card-buttons').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.action-buttons .btn').forEach(el => el.style.display = 'none');
+            // Скрываем кнопки сброса/гугла (они внутри action-buttons, но на всякий)
+            resetWeekBtn.style.display = 'none';
+            sendGoogleBtn.style.display = 'none';
+        }
+        // Перерисовываем, чтобы применились обработчики
+        renderStudents();
+    }
+
+    // Следим за изменением хэша
+    window.addEventListener('hashchange', () => {
+        isTeacherMode = window.location.hash === '#teacher';
+        applyMode();
+        renderAll();
+    });
+
+    // ======================== ИНИЦИАЛИЗАЦИЯ ========================
+    function init() {
+        // Дата
+        const now = new Date();
+        const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+        dateDisplay.textContent = now.toLocaleDateString('ru-RU', options);
+
+        // Режим
+        applyMode();
+
+        // Первичная отрисовка
+        renderAll();
+
+        // Если режим ученика — скрываем кнопки
+        if (!isTeacherMode) {
+            document.querySelectorAll('.card-buttons').forEach(el => el.style.display = 'none');
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>
